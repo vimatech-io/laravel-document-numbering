@@ -1,0 +1,68 @@
+{
+    "name": "vimatech/laravel-document-numbering",
+    "description": "Sequential, gap-free, concurrency-safe document numbering for Laravel (invoices, quotes, credit notes).",
+    "keywords": [
+        "laravel",
+        "invoice",
+        "numbering",
+        "sequence",
+        "gap-free",
+        "document",
+        "vimatech"
+    ],
+    "homepage": "https://github.com/vimatech-io/laravel-document-numbering",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Adel Zemzemi",
+            "email": "hello@adelzemzemi.dev"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/database": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+        "nesbot/carbon": "^2.72 || ^3.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^2.9 || ^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
+        "pestphp/pest": "^3.5 || ^4.0",
+        "phpstan/phpstan": "^1.12 || ^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vimatech\\DocumentNumbering\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vimatech\\DocumentNumbering\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Vimatech\\DocumentNumbering\\NumberingServiceProvider"
+            ],
+            "aliases": {
+                "Numbering": "Vimatech\\DocumentNumbering\\Facades\\Numbering"
+            }
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=512M",
+        "format": "vendor/bin/pint"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
