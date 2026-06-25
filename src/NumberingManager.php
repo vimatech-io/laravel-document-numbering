@@ -66,7 +66,12 @@ final class NumberingManager
         $periodKey = $config['reset']->periodKey($at);
         $connection = $this->connection();
 
-        $allocate = function () use ($connection, $scope, $type, $periodKey, $config, $at): string {
+        // The formatted number is captured by reference rather than returned
+        // through transaction(), whose declared return type varies between
+        // framework/analyser versions. This keeps next() strictly typed.
+        $number = '';
+
+        $allocate = function () use (&$number, $connection, $scope, $type, $periodKey, $config, $at): void {
             $sequence = $this->lockCurrentValue($connection, $scope, $type, $periodKey, $at) + 1;
 
             $this->rows($connection)
@@ -83,8 +88,6 @@ final class NumberingManager
             $this->events->dispatch(
                 new NumberAllocated($scope, $type, $periodKey, $sequence, $number),
             );
-
-            return $number;
         };
 
         // Connection::transaction() reuses the active transaction when one is
@@ -94,15 +97,9 @@ final class NumberingManager
         // "database is locked" error — only effective when we own the outer
         // transaction; nested calls run exactly once.
         try {
-            $number = $connection->transaction($allocate, self::MAX_LOCK_ATTEMPTS);
+            $connection->transaction($allocate, self::MAX_LOCK_ATTEMPTS);
         } catch (QueryException $e) {
             throw new SequenceLocked($scope, $type, $periodKey, $e);
-        }
-
-        // transaction() is declared to return mixed; our callback always
-        // returns the formatted number.
-        if (! is_string($number)) {
-            throw new SequenceLocked($scope, $type, $periodKey);
         }
 
         return $number;
