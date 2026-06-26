@@ -33,14 +33,4 @@ final class PendingNumber
     {
         return $this->manager->peek($this->scope, $this->type);
     }
-
-    public function scope(): string
-    {
-        return $this->scope;
-    }
-
-    public function type(): string
-    {
-        return $this->type;
-    }
 }
