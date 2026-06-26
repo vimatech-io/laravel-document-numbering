@@ -102,6 +102,10 @@ trait HasDocumentNumber
     /**
      * The allocation scope. Defaults to the value of $documentNumberScopeColumn
      * (e.g. company/tenant id) when defined, otherwise a single global scope.
+     *
+     * When a scope column is configured it must hold a value: silently falling
+     * back to the global scope could mix one tenant's numbers into another's
+     * sequence, so a missing value fails loudly instead.
      */
     public function documentNumberScope(): string
     {
@@ -113,7 +117,15 @@ trait HasDocumentNumber
 
         $value = $this->getAttribute($column);
 
-        return is_scalar($value) ? (string) $value : 'default';
+        if (is_scalar($value) && (string) $value !== '') {
+            return (string) $value;
+        }
+
+        throw new LogicException(sprintf(
+            'Model [%s] must have attribute [%s] set before saving, as it scopes the document number.',
+            static::class,
+            $column,
+        ));
     }
 
     /**

@@ -57,6 +57,10 @@ it('keeps per-scope counters when allocating through the trait', function (): vo
     expect($globex->number)->toBe('INV-2026-00001');
 });
 
+it('fails loudly when the scope attribute is missing', function (): void {
+    Invoice::create([]); // no company_id
+})->throws(LogicException::class, 'company_id');
+
 it('does not consume a number when the model creation transaction rolls back', function (): void {
     try {
         DB::transaction(function (): void {
