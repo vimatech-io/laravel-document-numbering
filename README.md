@@ -1,7 +1,9 @@
 # Laravel Document Numbering
 
 [![CI](https://github.com/vimatech-io/laravel-document-numbering/actions/workflows/ci.yml/badge.svg)](https://github.com/vimatech-io/laravel-document-numbering/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
+[![Total Downloads](https://img.shields.io/packagist/dt/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
+[![License](https://img.shields.io/packagist/l/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 
 **Sequential, gap-free, concurrency-safe document numbers for Laravel.**
 
