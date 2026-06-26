@@ -150,14 +150,12 @@ final class NumberingManager
         $raw = $types[$type];
 
         $pattern = $raw['pattern'] ?? '';
-        $reset = $raw['reset'] ?? ResetPolicy::Never;
-
         $compiled = is_string($pattern) ? $pattern : '';
         $this->compiler->validate($compiled);
 
         return [
             'pattern' => $compiled,
-            'reset' => $this->normaliseReset($reset),
+            'reset' => ResetPolicy::fromConfig($raw['reset'] ?? null),
             'gap_free' => (bool) ($raw['gap_free'] ?? true),
         ];
     }
@@ -195,15 +193,6 @@ final class NumberingManager
                 ->lockForUpdate()
                 ->value('last_value'),
         );
-    }
-
-    private function normaliseReset(mixed $reset): ResetPolicy
-    {
-        if ($reset instanceof ResetPolicy) {
-            return $reset;
-        }
-
-        return is_string($reset) ? ResetPolicy::from($reset) : ResetPolicy::Never;
     }
 
     private function toSequence(mixed $value): int

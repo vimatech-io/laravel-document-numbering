@@ -29,10 +29,16 @@ enum ResetPolicy: string
     }
 
     /**
-     * Normalise a loose config value (string or enum) into a ResetPolicy.
+     * Normalise a loose config value into a ResetPolicy. Accepts an enum case
+     * or its string value; anything else (e.g. a missing key) falls back to
+     * Never. An unknown string is rejected loudly so misconfiguration surfaces.
      */
-    public static function fromConfig(self|string $value): self
+    public static function fromConfig(mixed $value): self
     {
-        return $value instanceof self ? $value : self::from($value);
+        if ($value instanceof self) {
+            return $value;
+        }
+
+        return is_string($value) ? self::from($value) : self::Never;
     }
 }
