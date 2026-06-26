@@ -7,39 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- `numbering.lock_attempts` config option to tune how many times the allocation
-  transaction is retried on a deadlock / locked error.
-
-### Changed
-
-- `NumberingManager` now reads its configuration from the config repository on
-  demand instead of capturing a snapshot at construction, making it a fully
-  stateless singleton that is safe under FrankenPHP/Octane worker mode.
-- Reset-policy normalisation is centralised in `ResetPolicy::fromConfig()`.
-- A model with a configured scope column now throws a `LogicException` when that
-  attribute is empty at save time, instead of silently using the global scope.
-
-### Removed
-
-- Unused `PendingNumber::scope()` and `PendingNumber::type()` accessors.
-
-## [1.0.0] - 2026-06-24
+## [1.0.0] - 2026-06-26
 
 ### Added
 
 - Initial release.
 - `NumberingManager` with `for($scope, $type)->next()` and `->peek()` for
   atomic, concurrency-safe sequential allocation using a DB transaction and
-  `lockForUpdate()` row lock.
+  `lockForUpdate()` row lock. The manager is stateless (config read on demand,
+  connection resolved per call), so it is safe as a long-lived singleton under
+  FrankenPHP/Octane worker mode.
 - Configurable per-type patterns with the `{YYYY}`, `{YY}`, `{MM}` and
   `{seq:n}` tokens, compiled by `Support\PatternCompiler`.
 - Period resets: `yearly`, `monthly` and `never` via the `ResetPolicy` enum.
 - Per-type `gap_free` policy: allocate inside the caller's transaction so a
   rollback releases the number, or fast-sequential mode that favours throughput.
 - `Concerns\HasDocumentNumber` trait that assigns the number on `creating`,
-  wrapping the first save of gap-free types in a transaction.
+  wrapping the first save of gap-free types in a transaction. A configured scope
+  column must be set before saving, otherwise a `LogicException` is thrown rather
+  than silently using the global scope.
+- `numbering.lock_attempts` config option to tune how many times the allocation
+  transaction is retried on a deadlock / locked error.
 - `Events\NumberAllocated` event and `Exceptions\SequenceLocked`,
   `InvalidPattern` and `UnknownDocumentType` exceptions.
 - `Numbering` facade.
