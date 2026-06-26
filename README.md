@@ -75,6 +75,9 @@ return [
     'connection' => env('DOCUMENT_NUMBERING_CONNECTION'),
     'table' => 'document_number_sequences',
 
+    // Times the allocation transaction is retried on a deadlock / locked error.
+    'lock_attempts' => 5,
+
     'types' => [
         'invoice' => [
             'pattern' => 'INV-{YYYY}-{seq:5}',
@@ -127,6 +130,11 @@ The reset policy decides when the counter restarts at `1`, by computing a
 A **scope** is an arbitrary string that isolates counters — typically a
 company, tenant or branch id. `acme` and `globex` each get their own
 `INV-2026-00001`.
+
+When you configure a scope column on a model (`$documentNumberScopeColumn`),
+that attribute **must be set before saving**. A missing value throws a
+`LogicException` rather than silently falling back to the global scope, which
+would otherwise mix one tenant's numbers into another's sequence.
 
 ## Usage
 

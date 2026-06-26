@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `numbering.lock_attempts` config option to tune how many times the allocation
+  transaction is retried on a deadlock / locked error.
+
 ### Changed
 
 - `NumberingManager` now reads its configuration from the config repository on
   demand instead of capturing a snapshot at construction, making it a fully
   stateless singleton that is safe under FrankenPHP/Octane worker mode.
+- Reset-policy normalisation is centralised in `ResetPolicy::fromConfig()`.
+- A model with a configured scope column now throws a `LogicException` when that
+  attribute is empty at save time, instead of silently using the global scope.
+
+### Removed
+
+- Unused `PendingNumber::scope()` and `PendingNumber::type()` accessors.
 
 ## [1.0.0] - 2026-06-24
 
