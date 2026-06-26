@@ -32,6 +32,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Lock retry attempts
+    |--------------------------------------------------------------------------
+    |
+    | How many times the allocation transaction is retried when the database
+    | reports a deadlock or a busy/locked error. Raise this for workloads with
+    | heavy write contention on the same sequence. Must be at least 1.
+    |
+    */
+
+    'lock_attempts' => 5,
+
+    /*
+    |--------------------------------------------------------------------------
     | Document types
     |--------------------------------------------------------------------------
     |

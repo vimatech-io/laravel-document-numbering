@@ -36,10 +36,9 @@ use Vimatech\DocumentNumbering\Support\PatternCompiler;
 final class NumberingManager
 {
     /**
-     * How many times the framework may retry the allocation transaction when
-     * the database reports a deadlock or a busy/locked error.
+     * Fallback retry count when none is configured (see numbering.lock_attempts).
      */
-    private const MAX_LOCK_ATTEMPTS = 5;
+    private const DEFAULT_LOCK_ATTEMPTS = 5;
 
     public function __construct(
         private readonly ConnectionResolverInterface $resolver,
@@ -97,7 +96,7 @@ final class NumberingManager
         // "database is locked" error — only effective when we own the outer
         // transaction; nested calls run exactly once.
         try {
-            $connection->transaction($allocate, self::MAX_LOCK_ATTEMPTS);
+            $connection->transaction($allocate, $this->lockAttempts());
         } catch (QueryException $e) {
             throw new SequenceLocked($scope, $type, $periodKey, $e);
         }
@@ -217,6 +216,13 @@ final class NumberingManager
         $table = $this->config->get('numbering.table');
 
         return is_string($table) ? $table : 'document_number_sequences';
+    }
+
+    private function lockAttempts(): int
+    {
+        $attempts = $this->config->get('numbering.lock_attempts');
+
+        return is_int($attempts) && $attempts >= 1 ? $attempts : self::DEFAULT_LOCK_ATTEMPTS;
     }
 
     /**
