@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-06-26
+
+### Changed
+
+- Add `.gitattributes` (`export-ignore`) to slim the distribution archive.
+- Add Packagist version and downloads badges to the README.
+
 ## [1.0.0] - 2026-06-26
 
 ### Added
