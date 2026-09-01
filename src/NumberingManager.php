@@ -15,6 +15,7 @@ use Illuminate\Database\QueryException;
 use Vimatech\DocumentNumbering\Enums\ResetPolicy;
 use Vimatech\DocumentNumbering\Events\NumberAllocated;
 use Vimatech\DocumentNumbering\Exceptions\SequenceLocked;
+use Vimatech\DocumentNumbering\Exceptions\SequenceUnreadable;
 use Vimatech\DocumentNumbering\Exceptions\UnknownDocumentType;
 use Vimatech\DocumentNumbering\Support\PatternCompiler;
 
@@ -184,14 +185,21 @@ final class NumberingManager
             'updated_at' => $at,
         ]);
 
-        return $this->toSequence(
-            $this->rows($connection)
-                ->where('scope', $scope)
-                ->where('type', $type)
-                ->where('period_key', $periodKey)
-                ->lockForUpdate()
-                ->value('last_value'),
-        );
+        $value = $this->rows($connection)
+            ->where('scope', $scope)
+            ->where('type', $type)
+            ->where('period_key', $periodKey)
+            ->lockForUpdate()
+            ->value('last_value');
+
+        // The insert above is insertOrIgnore, which swallows any failure and not
+        // only a duplicate key. Reading nothing back therefore means the row was
+        // never written, and starting from zero would re-issue a used number.
+        if (! is_numeric($value)) {
+            throw new SequenceUnreadable($scope, $type, $periodKey);
+        }
+
+        return (int) $value;
     }
 
     private function toSequence(mixed $value): int

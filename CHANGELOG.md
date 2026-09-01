@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-09-01
+
+### Fixed
+
+- Allocation refuses to continue when the sequence row cannot be read back after being created, instead of treating the missing value as zero. The row is created with `insertOrIgnore`, which swallows every failure and not only a duplicate key, so a numbering table carrying a column the package does not populate silently produced no row; the read then returned null, null was coerced to zero, and the next document number re-issued one that was already in use. It now throws `SequenceUnreadable` and the surrounding transaction rolls back, so no number is consumed. `peek()` is unchanged: an absent row there legitimately means nothing has been allocated yet.
+
 ## [1.0.1] - 2026-06-26
 
 ### Changed
