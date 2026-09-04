@@ -11,7 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `hasAllocated()` on the sequence (`Numbering::for($scope, $type)->hasAllocated()`, or `NumberingManager::hasAllocated($scope, $type)`): whether the sequence has ever consumed a number, across **all** periods. `peek()` cannot answer this — it only reads the current period, so under a yearly reset a sequence used all through last year reports the fresh `…-00001` of the new year on 1 January. Code that used `peek()` to decide whether a numbering setting was still safe to change therefore reopened that decision at every period boundary, silently. `hasAllocated()` is a read and consumes nothing; an unknown document type throws `UnknownDocumentType` rather than returning `false`.
+- `hasEverAllocated()` on the sequence (`Numbering::for($scope, $type)->hasEverAllocated()`, or `NumberingManager::hasEverAllocated($scope, $type)`): whether the sequence has ever consumed a number, across **all** periods. Use it to gate a change to a numbering setting on whether the sequence is already engaged. It is a read and consumes nothing.
+- **The two read methods are bounded differently, and deliberately so: `peek()` reports the current period only, `hasEverAllocated()` reports every period.** `peek()` therefore cannot answer "is this sequence engaged?" — under a yearly reset a sequence used all through last year reports the fresh `…-00001` of the new year on 1 January, so code that gated a settings lock on `peek()` reopened that decision at every period boundary, silently.
+
+### Changed
+
+- Documented that `next()`, `peek()` and `hasEverAllocated()` each resolve the type's configuration first, so all three can throw `InvalidPattern` as well as `UnknownDocumentType`. The README previously named only `UnknownDocumentType`. Both extend `NumberingException`, which is the only type worth catching and only as a last-resort guard.
+- Corrected the README's account of what a settings lock guards: it listed "a starting value" among the numbering settings, and this package has no starting-value setting. The configurable values are `pattern`, `reset` and `gap_free` per type, plus `table`, `connection` and `lock_attempts`.
+- Qualified the "database-portable" claim in the README. The package writes no engine-specific SQL, but the automated suite runs on SQLite only — where `lockForUpdate()` compiles to an empty string, so the serialisation the concurrency test observes comes from SQLite's database-wide write lock, not from a row lock. The `SELECT ... FOR UPDATE` path MySQL and PostgreSQL take is not covered by any test in the repository. No behaviour changed; the README now says which guarantee is verified and which is designed-for.
 
 ## [1.0.2] - 2026-09-01
 
