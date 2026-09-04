@@ -16,6 +16,15 @@ composer install
 composer test
 ```
 
+The suite runs on SQLite, where `lockForUpdate()` compiles to an empty string,
+so the row lock in `NumberingManager` is not covered.
+
+Adding a second connection that holds the row does not cover it either: the
+`insertOrIgnore` preceding the locking read takes a conflicting lock first, so
+the allocation times out on the insert and the test passes unchanged with
+`lockForUpdate()` removed. A test that covers the lock has to reach the locking
+read.
+
 ## Code Style
 
 ```bash

@@ -35,12 +35,18 @@ never happen.
 | Per-scope counters (company / tenant / branch) | ✅ |
 | Period resets (`yearly`, `monthly`, `never`) | ✅ |
 | Gap-free mode (transaction-bound) | ✅ |
+| "Has this sequence been used?" across all periods | ✅ |
 | Fast-sequential mode | ✅ |
 | Concurrency-safe (row locks) | ✅ |
 | Eloquent trait, event & facade | ✅ |
-| Database-portable (MySQL, PostgreSQL, SQLite) | ✅ |
+| Database-portable (MySQL, PostgreSQL, SQLite) | ⚠️ |
 | Octane / FrankenPHP safe | ✅ |
 | UI | ❌ |
+
+> ⚠️ The package writes no engine-specific SQL, but the automated suite runs on
+> SQLite only — where `lockForUpdate()` compiles to an empty string. Read
+> [Database notes](#database-notes) before relying on the row lock in
+> production.
 
 ## Requirements
 
@@ -149,7 +155,65 @@ $number = Numbering::for($companyId, 'invoice')->next(); // "INV-2026-00001"
 
 // Preview the next value without consuming it (advisory under concurrency):
 $preview = Numbering::for($companyId, 'invoice')->peek();
+
+// Has this sequence ever taken a number, in any period?
+$engaged = Numbering::for($companyId, 'invoice')->hasEverAllocated();
 ```
+
+### Has the sequence been used yet?
+
+`hasEverAllocated()` answers *"has this sequence ever consumed a number?"* across
+**every** period, which is what you need before letting someone change a
+numbering setting — the `pattern`, the `reset` policy or `gap_free` of a type,
+or the `table` and `connection` the counters live in.
+
+`peek()` cannot answer it. It only looks at the current period, so under a
+yearly reset a sequence used all through last year reads as untouched on
+1 January:
+
+```php
+// 20 November 2026, after a year of invoices
+Numbering::for($companyId, 'invoice')->peek();             // "INV-2026-00042"
+Numbering::for($companyId, 'invoice')->hasEverAllocated(); // true
+
+// 1 January 2027, same sequence, nothing allocated yet this year
+Numbering::for($companyId, 'invoice')->peek();             // "INV-2027-00001"
+Numbering::for($companyId, 'invoice')->hasEverAllocated(); // true
+```
+
+Two details worth knowing:
+
+- **Deleting the documents does not reset it.** The counter is monotonic and
+  independent of your models: a number stays consumed once taken, whatever
+  later happens to the document that carries it.
+- **It is a read, not a lock.** Like `peek()`, it is advisory under
+  concurrency: an allocation running in another uncommitted transaction is not
+  visible to it. If a settings change must be serialised against allocation,
+  take that lock yourself.
+
+An unknown document type throws rather than returning `false`, so a typo cannot
+silently report an unused sequence — see below.
+
+### Configuration errors
+
+`next()`, `peek()` and `hasEverAllocated()` all resolve the type's
+configuration before doing anything else, so each of the three can throw:
+
+| Exception | Raised when |
+| --- | --- |
+| `UnknownDocumentType` | the type is absent from `numbering.types` |
+| `InvalidPattern` | the type's `pattern` uses a token the compiler does not know |
+
+Both report a configuration the package cannot work with, and neither is
+recoverable where it is raised: the fix is in `config/numbering.php` or in the
+type name the caller passed, not in the calling code path.
+
+Every exception the package raises extends
+`Vimatech\DocumentNumbering\Exceptions\NumberingException`, and that is the type
+to catch if you want one — as a last-resort guard around the whole operation,
+not as flow control. Note that it also covers the allocation-time failures
+`SequenceLocked` and `SequenceUnreadable`, which `next()` can raise long after
+the configuration has been accepted.
 
 ### Via the Eloquent trait
 
@@ -226,8 +290,10 @@ $other->number;                                   // "INV-2026-00001"
 Each `(scope, type, period_key)` owns one row in `document_number_sequences`.
 Allocation runs inside a transaction and takes a `lockForUpdate()` lock on that
 row, so concurrent callers **serialise on the row** rather than racing the
-counter. The first allocation for a new period inserts the row at `0`; the
-unique index on `(scope, type, period_key)` makes a lost insert race harmless.
+counter — on engines that implement row locks; see
+[Database notes](#database-notes). The first allocation for a new period inserts
+the row at `0`; the unique index on `(scope, type, period_key)` makes a lost
+insert race harmless.
 
 ### `gap_free: true` (legally safe, default)
 
@@ -290,6 +356,18 @@ request-scoped state in long-lived listeners.
   writers and provides the same guarantees with coarser granularity. Great for
   tests and small single-writer apps.
 
+**What the test suite establishes, and what it does not.** Allocation goes
+through Laravel's query builder and contains no engine-specific SQL, so the same
+code path runs on all three. What differs is the guarantee underneath it, and
+the automated suite exercises only one of them: it runs on SQLite, where
+`lockForUpdate()` compiles to an empty string and the serialisation observed —
+including the no-gaps, no-duplicates concurrency test — comes from SQLite's
+database-wide write lock. The `SELECT ... FOR UPDATE` path that MySQL and
+PostgreSQL take is not covered by any test in this repository. Treat the row
+lock on those engines as designed-for and unproven here rather than verified,
+and see [CONTRIBUTING](CONTRIBUTING.md) for why a second connection holding the
+row does not close that gap.
+
 If the database aborts a statement while waiting for the lock (lock-wait
 timeout or deadlock), a `Vimatech\DocumentNumbering\Exceptions\SequenceLocked`
 exception is thrown and the transaction is rolled back — no number is consumed.
@@ -334,7 +412,9 @@ against a shared SQLite database and asserts that the allocated numbers contain
 - **No domain assumptions** — works for invoices, quotes, credit notes or any
   document type you define.
 - **Laravel-native API** — a trait, an event, a facade and a config file.
-- **Database-portable** — the same guarantees on MySQL, PostgreSQL and SQLite.
+- **No engine-specific SQL** — allocation goes through the query builder, so the
+  same code path runs on MySQL, PostgreSQL and SQLite. What each engine's lock
+  guarantees underneath it differs; see [Database notes](#database-notes).
 - **Worker-safe** — stateless singleton, no accumulating static state, ready for
   Octane and FrankenPHP.
 
