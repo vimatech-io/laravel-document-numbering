@@ -35,6 +35,7 @@ never happen.
 | Per-scope counters (company / tenant / branch) | ✅ |
 | Period resets (`yearly`, `monthly`, `never`) | ✅ |
 | Gap-free mode (transaction-bound) | ✅ |
+| "Has this sequence been used?" across all periods | ✅ |
 | Fast-sequential mode | ✅ |
 | Concurrency-safe (row locks) | ✅ |
 | Eloquent trait, event & facade | ✅ |
@@ -149,7 +150,43 @@ $number = Numbering::for($companyId, 'invoice')->next(); // "INV-2026-00001"
 
 // Preview the next value without consuming it (advisory under concurrency):
 $preview = Numbering::for($companyId, 'invoice')->peek();
+
+// Has this sequence ever taken a number, in any period?
+$engaged = Numbering::for($companyId, 'invoice')->hasAllocated();
 ```
+
+### Has the sequence been used yet?
+
+`hasAllocated()` answers *"has this sequence ever consumed a number?"* across
+**every** period, which is what you need before letting someone change a
+numbering setting — a starting value, a pattern, a reset policy.
+
+`peek()` cannot answer it. It only looks at the current period, so under a
+yearly reset a sequence used all through last year reads as untouched on
+1 January:
+
+```php
+// 20 November 2026, after a year of invoices
+Numbering::for($companyId, 'invoice')->peek();         // "INV-2026-00042"
+Numbering::for($companyId, 'invoice')->hasAllocated(); // true
+
+// 1 January 2027, same sequence, nothing allocated yet this year
+Numbering::for($companyId, 'invoice')->peek();         // "INV-2027-00001"
+Numbering::for($companyId, 'invoice')->hasAllocated(); // true
+```
+
+Two details worth knowing:
+
+- **Deleting the documents does not reset it.** The counter is monotonic and
+  independent of your models: a number stays consumed once taken, whatever
+  later happens to the document that carries it.
+- **It is a read, not a lock.** Like `peek()`, it is advisory under
+  concurrency: an allocation running in another uncommitted transaction is not
+  visible to it. If a settings change must be serialised against allocation,
+  take that lock yourself.
+
+An unknown document type throws `UnknownDocumentType` rather than returning
+`false`, so a typo cannot silently report an unused sequence.
 
 ### Via the Eloquent trait
 

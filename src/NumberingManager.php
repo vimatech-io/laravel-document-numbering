@@ -126,6 +126,26 @@ final class NumberingManager
     }
 
     /**
+     * Whether this sequence has ever consumed a number, in any period.
+     *
+     * Deliberately not period-scoped, unlike peek(): under a yearly reset a
+     * sequence used all through last year is still an engaged sequence on
+     * 1 January, and a caller gating a settings lock on it must see that.
+     */
+    public function hasAllocated(string $scope, string $type): bool
+    {
+        // Refuse an unknown type instead of reporting an unused sequence: a
+        // typo in the type would silently unlock what the caller is guarding.
+        $this->configFor($type);
+
+        return $this->rows($this->connection())
+            ->where('scope', $scope)
+            ->where('type', $type)
+            ->where('last_value', '>', 0)
+            ->exists();
+    }
+
+    /**
      * Whether a document type is configured.
      */
     public function knows(string $type): bool

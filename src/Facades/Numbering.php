@@ -12,6 +12,7 @@ use Vimatech\DocumentNumbering\PendingNumber;
  * @method static PendingNumber for(string $scope, string $type)
  * @method static string next(string $scope, string $type)
  * @method static string peek(string $scope, string $type)
+ * @method static bool hasAllocated(string $scope, string $type)
  * @method static bool knows(string $type)
  *
  * @see NumberingManager

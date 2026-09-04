@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-04
+
+### Added
+
+- `hasAllocated()` on the sequence (`Numbering::for($scope, $type)->hasAllocated()`, or `NumberingManager::hasAllocated($scope, $type)`): whether the sequence has ever consumed a number, across **all** periods. `peek()` cannot answer this — it only reads the current period, so under a yearly reset a sequence used all through last year reports the fresh `…-00001` of the new year on 1 January. Code that used `peek()` to decide whether a numbering setting was still safe to change therefore reopened that decision at every period boundary, silently. `hasAllocated()` is a read and consumes nothing; an unknown document type throws `UnknownDocumentType` rather than returning `false`.
+
 ## [1.0.2] - 2026-09-01
 
 ### Fixed
@@ -47,5 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database migration for the `document_number_sequences` table with a unique
   index on `(scope, type, period_key)`.
 
-[Unreleased]: https://github.com/vimatech-io/laravel-document-numbering/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/vimatech-io/laravel-document-numbering/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/vimatech-io/laravel-document-numbering/compare/v1.0.2...v1.1.0
+[1.0.2]: https://github.com/vimatech-io/laravel-document-numbering/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/vimatech-io/laravel-document-numbering/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/vimatech-io/laravel-document-numbering/releases/tag/v1.0.0
