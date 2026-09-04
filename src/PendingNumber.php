@@ -38,8 +38,8 @@ final class PendingNumber
      * Whether this sequence has ever consumed a number, in any period — the
      * question peek() cannot answer, since it only sees the current period.
      */
-    public function hasAllocated(): bool
+    public function hasEverAllocated(): bool
     {
-        return $this->manager->hasAllocated($this->scope, $this->type);
+        return $this->manager->hasEverAllocated($this->scope, $this->type);
     }
 }

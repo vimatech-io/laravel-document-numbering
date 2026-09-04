@@ -132,7 +132,7 @@ final class NumberingManager
      * sequence used all through last year is still an engaged sequence on
      * 1 January, and a caller gating a settings lock on it must see that.
      */
-    public function hasAllocated(string $scope, string $type): bool
+    public function hasEverAllocated(string $scope, string $type): bool
     {
         // Refuse an unknown type instead of reporting an unused sequence: a
         // typo in the type would silently unlock what the caller is guarding.

@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Vimatech\DocumentNumbering\Exceptions\InvalidPattern;
 use Vimatech\DocumentNumbering\Exceptions\UnknownDocumentType;
 use Vimatech\DocumentNumbering\Facades\Numbering;
 use Vimatech\DocumentNumbering\Tests\Fixtures\Invoice;
@@ -20,13 +21,13 @@ afterEach(function (): void {
 });
 
 it('is false for a sequence that has never allocated', function (): void {
-    expect(Numbering::for('acme', 'invoice')->hasAllocated())->toBeFalse();
+    expect(Numbering::for('acme', 'invoice')->hasEverAllocated())->toBeFalse();
 });
 
 it('is true once a number has been allocated', function (): void {
     Numbering::for('acme', 'invoice')->next();
 
-    expect(Numbering::for('acme', 'invoice')->hasAllocated())->toBeTrue();
+    expect(Numbering::for('acme', 'invoice')->hasEverAllocated())->toBeTrue();
 });
 
 it('stays true after a yearly reset, when peek() reports a fresh sequence', function (): void {
@@ -38,7 +39,7 @@ it('stays true after a yearly reset, when peek() reports a fresh sequence', func
     // The current period is empty, so peek() offers number 1 again — correct
     // for peek, and exactly why it cannot answer "is this sequence engaged?".
     expect(Numbering::for('acme', 'invoice')->peek())->toBe('INV-2027-00001');
-    expect(Numbering::for('acme', 'invoice')->hasAllocated())->toBeTrue();
+    expect(Numbering::for('acme', 'invoice')->hasEverAllocated())->toBeTrue();
 });
 
 it('stays true after a monthly reset', function (): void {
@@ -47,14 +48,14 @@ it('stays true after a monthly reset', function (): void {
 
     CarbonImmutable::setTestNow('2026-07-01 00:00:00');
 
-    expect(Numbering::for('acme', 'credit_note')->hasAllocated())->toBeTrue();
+    expect(Numbering::for('acme', 'credit_note')->hasEverAllocated())->toBeTrue();
 });
 
 it('is scoped to its own scope and type', function (): void {
     Numbering::for('acme', 'invoice')->next();
 
-    expect(Numbering::for('globex', 'invoice')->hasAllocated())->toBeFalse();
-    expect(Numbering::for('acme', 'quote')->hasAllocated())->toBeFalse();
+    expect(Numbering::for('globex', 'invoice')->hasEverAllocated())->toBeFalse();
+    expect(Numbering::for('acme', 'quote')->hasEverAllocated())->toBeFalse();
 });
 
 it('does not treat a materialised counter row as an allocation', function (): void {
@@ -69,7 +70,7 @@ it('does not treat a materialised counter row as an allocation', function (): vo
         'updated_at' => now(),
     ]);
 
-    expect(Numbering::for('acme', 'invoice')->hasAllocated())->toBeFalse();
+    expect(Numbering::for('acme', 'invoice')->hasEverAllocated())->toBeFalse();
 });
 
 it('stays true after the document carrying the number is deleted', function (): void {
@@ -84,18 +85,24 @@ it('stays true after the document carrying the number is deleted', function (): 
     // The counter is monotonic and independent of the caller's models: a
     // number stays consumed whatever happens to the document that carries it.
     expect(Invoice::query()->count())->toBe(0);
-    expect(Numbering::for('acme', 'invoice')->hasAllocated())->toBeTrue();
+    expect(Numbering::for('acme', 'invoice')->hasEverAllocated())->toBeTrue();
 });
 
 it('consumes nothing', function (): void {
     Numbering::for('acme', 'invoice')->next();
 
-    Numbering::for('acme', 'invoice')->hasAllocated();
+    Numbering::for('acme', 'invoice')->hasEverAllocated();
 
     expect(Numbering::for('acme', 'invoice')->peek())->toBe('INV-2026-00002');
     expect(Numbering::for('acme', 'invoice')->next())->toBe('INV-2026-00002');
 });
 
 it('refuses an unknown document type instead of reporting an unused sequence', function (): void {
-    Numbering::for('acme', 'does-not-exist')->hasAllocated();
+    Numbering::for('acme', 'does-not-exist')->hasEverAllocated();
 })->throws(UnknownDocumentType::class);
+
+it('refuses a type whose pattern cannot be compiled', function (): void {
+    config()->set('numbering.types.invoice.pattern', 'INV-{QUARTER}-{seq:5}');
+
+    Numbering::for('acme', 'invoice')->hasEverAllocated();
+})->throws(InvalidPattern::class);
