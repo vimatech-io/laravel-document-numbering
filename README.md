@@ -1,14 +1,19 @@
-# Laravel Document Numbering
+<a href="https://vimatech.io/open-source">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://vimatech.io/packages/header/laravel-document-numbering/dark.webp">
+    <img alt="Laravel Document Numbering" src="https://vimatech.io/packages/header/laravel-document-numbering/light.webp">
+  </picture>
+</a>
+
+# Gap-free document numbers that survive concurrency
 
 [![CI](https://github.com/vimatech-io/laravel-document-numbering/actions/workflows/ci.yml/badge.svg)](https://github.com/vimatech-io/laravel-document-numbering/actions/workflows/ci.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 [![Total Downloads](https://img.shields.io/packagist/dt/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 [![License](https://img.shields.io/packagist/l/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 
-**Sequential, gap-free, concurrency-safe document numbers for Laravel.**
-
-Allocate legally-compliant numbers for invoices, quotes and credit notes —
-under concurrent requests, two callers can never take the same number or leave a
+Allocate legally-compliant numbers for invoices, quotes and credit notes: under
+concurrent requests, two callers can never take the same number or leave a
 hole in the sequence.
 
 ## Why Laravel Document Numbering?
@@ -24,7 +29,7 @@ is harder than it looks. Most Laravel apps eventually need to answer:
 - What happens to the number if the surrounding transaction rolls back?
 
 Laravel Document Numbering provides a small, database-backed layer for exactly
-that — it leans on database transactions and row locks rather than hoping races
+that: it leans on database transactions and row locks rather than hoping races
 never happen.
 
 ## Feature Matrix
@@ -44,7 +49,7 @@ never happen.
 | UI | ❌ |
 
 > ⚠️ The package writes no engine-specific SQL, but the automated suite runs on
-> SQLite only — where `lockForUpdate()` compiles to an empty string. Read
+> SQLite only, where `lockForUpdate()` compiles to an empty string. Read
 > [Database notes](#database-notes) before relying on the row lock in
 > production.
 
@@ -135,7 +140,7 @@ The reset policy decides when the counter restarts at `1`, by computing a
 
 ### Scopes
 
-A **scope** is an arbitrary string that isolates counters — typically a
+A **scope** is an arbitrary string that isolates counters: typically a
 company, tenant or branch id. `acme` and `globex` each get their own
 `INV-2026-00001`.
 
@@ -164,7 +169,7 @@ $engaged = Numbering::for($companyId, 'invoice')->hasEverAllocated();
 
 `hasEverAllocated()` answers *"has this sequence ever consumed a number?"* across
 **every** period, which is what you need before letting someone change a
-numbering setting — the `pattern`, the `reset` policy or `gap_free` of a type,
+numbering setting: the `pattern`, the `reset` policy or `gap_free` of a type,
 or the `table` and `connection` the counters live in.
 
 `peek()` cannot answer it. It only looks at the current period, so under a
@@ -192,7 +197,7 @@ Two details worth knowing:
   take that lock yourself.
 
 An unknown document type throws rather than returning `false`, so a typo cannot
-silently report an unused sequence — see below.
+silently report an unused sequence. See below.
 
 ### Configuration errors
 
@@ -210,7 +215,7 @@ type name the caller passed, not in the calling code path.
 
 Every exception the package raises extends
 `Vimatech\DocumentNumbering\Exceptions\NumberingException`, and that is the type
-to catch if you want one — as a last-resort guard around the whole operation,
+to catch if you want one, as a last-resort guard around the whole operation,
 not as flow control. Note that it also covers the allocation-time failures
 `SequenceLocked` and `SequenceUnreadable`, which `next()` can raise long after
 the configuration has been accepted.
@@ -246,7 +251,7 @@ public function documentNumberColumn(): string { return 'reference'; }
 ```
 
 For **gap-free** types the trait wraps the first `save()` in a database
-transaction, so the number allocation and the row `INSERT` commit together — if
+transaction, so the number allocation and the row `INSERT` commit together: if
 the insert fails, the number is released back into the sequence.
 
 ## Complete Example
@@ -290,7 +295,7 @@ $other->number;                                   // "INV-2026-00001"
 Each `(scope, type, period_key)` owns one row in `document_number_sequences`.
 Allocation runs inside a transaction and takes a `lockForUpdate()` lock on that
 row, so concurrent callers **serialise on the row** rather than racing the
-counter — on engines that implement row locks; see
+counter, on engines that implement row locks; see
 [Database notes](#database-notes). The first allocation for a new period inserts
 the row at `0`; the unique index on `(scope, type, period_key)` makes a lost
 insert race harmless.
@@ -338,7 +343,7 @@ across many requests. Specifically:
   reconnect between requests (which Octane performs) is picked up automatically.
 - **No accumulating static state.** Nothing grows in memory across requests.
 - **The `HasDocumentNumber` trait registers its `creating` hook once** per
-  worker, via Eloquent's standard trait-boot mechanism — there is no
+  worker, via Eloquent's standard trait-boot mechanism: there is no
   per-request re-registration or listener leak.
 - **Correctness is unchanged.** Worker mode runs several workers concurrently,
   exactly like PHP-FPM. Gap-free safety still comes from the database row lock,
@@ -360,8 +365,8 @@ request-scoped state in long-lived listeners.
 through Laravel's query builder and contains no engine-specific SQL, so the same
 code path runs on all three. What differs is the guarantee underneath it, and
 the automated suite exercises only one of them: it runs on SQLite, where
-`lockForUpdate()` compiles to an empty string and the serialisation observed —
-including the no-gaps, no-duplicates concurrency test — comes from SQLite's
+`lockForUpdate()` compiles to an empty string and the serialisation observed
+(including the no-gaps, no-duplicates concurrency test) comes from SQLite's
 database-wide write lock. The `SELECT ... FOR UPDATE` path that MySQL and
 PostgreSQL take is not covered by any test in this repository. Treat the row
 lock on those engines as designed-for and unproven here rather than verified,
@@ -370,7 +375,7 @@ row does not close that gap.
 
 If the database aborts a statement while waiting for the lock (lock-wait
 timeout or deadlock), a `Vimatech\DocumentNumbering\Exceptions\SequenceLocked`
-exception is thrown and the transaction is rolled back — no number is consumed.
+exception is thrown and the transaction is rolled back: no number is consumed.
 
 ## Events
 
@@ -405,17 +410,17 @@ against a shared SQLite database and asserts that the allocated numbers contain
 
 ## Design Principles
 
-- **Correctness first** — gap-free safety comes from database row locks, not
+- **Correctness first**: gap-free safety comes from database row locks, not
   optimistic hoping.
-- **Backend-only, UI agnostic** — no controllers, no views, no opinions on your
+- **Backend-only, UI agnostic**: no controllers, no views, no opinions on your
   frontend.
-- **No domain assumptions** — works for invoices, quotes, credit notes or any
+- **No domain assumptions**: works for invoices, quotes, credit notes or any
   document type you define.
-- **Laravel-native API** — a trait, an event, a facade and a config file.
-- **No engine-specific SQL** — allocation goes through the query builder, so the
+- **Laravel-native API**: a trait, an event, a facade and a config file.
+- **No engine-specific SQL**: allocation goes through the query builder, so the
   same code path runs on MySQL, PostgreSQL and SQLite. What each engine's lock
   guarantees underneath it differs; see [Database notes](#database-notes).
-- **Worker-safe** — stateless singleton, no accumulating static state, ready for
+- **Worker-safe**: stateless singleton, no accumulating static state, ready for
   Octane and FrankenPHP.
 
 ## Possible Future Extensions
