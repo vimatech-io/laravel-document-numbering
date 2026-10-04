@@ -12,9 +12,11 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 [![License](https://img.shields.io/packagist/l/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 
-Allocate legally-compliant numbers for invoices, quotes and credit notes: under
-concurrent requests, two callers can never take the same number or leave a
-hole in the sequence.
+Allocate sequential, gap-free numbers for invoices, quotes and credit notes, using
+database transactions and row locks: under concurrent requests, two callers cannot
+take the same number or leave a hole in the sequence. Whether a numbering scheme
+meets the rules of your jurisdiction is for you to establish; see
+[Database notes](#database-notes) for what each engine guarantees.
 
 ## Why Laravel Document Numbering?
 
