@@ -5,22 +5,25 @@
   </picture>
 </a>
 
-# Gap-free document numbers that survive concurrency
+# Document numbers that survive concurrency, gap-free by default
 
 [![CI](https://github.com/vimatech-io/laravel-document-numbering/actions/workflows/ci.yml/badge.svg)](https://github.com/vimatech-io/laravel-document-numbering/actions/workflows/ci.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 [![Total Downloads](https://img.shields.io/packagist/dt/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 [![License](https://img.shields.io/packagist/l/vimatech/laravel-document-numbering.svg)](https://packagist.org/packages/vimatech/laravel-document-numbering)
 
-Allocate legally-compliant numbers for invoices, quotes and credit notes: under
-concurrent requests, two callers can never take the same number or leave a
-hole in the sequence.
+Allocate sequential numbers for invoices, quotes and credit notes, using database
+transactions and row locks. Under concurrent requests two callers never take the
+same number, and a type with `gap_free: true` (the default) never leaves a hole in
+its sequence either. Whether a numbering scheme
+meets the rules of your jurisdiction is for you to establish; see
+[Database notes](#database-notes) for what each engine guarantees.
 
 ## Why Laravel Document Numbering?
 
-Gap-free numbering is a **legal requirement** for invoices in most
-jurisdictions: the sequence may not skip values. Getting that right under load
-is harder than it looks. Most Laravel apps eventually need to answer:
+Invoices and credit notes are commonly numbered in an unbroken sequence.
+Getting that right under load is harder than it looks. Most Laravel apps
+eventually need to answer:
 
 - How do I guarantee invoice numbers never skip a value?
 - How do two concurrent requests avoid taking the same number?
@@ -300,7 +303,7 @@ counter, on engines that implement row locks; see
 the row at `0`; the unique index on `(scope, type, period_key)` makes a lost
 insert race harmless.
 
-### `gap_free: true` (legally safe, default)
+### `gap_free: true` (no gaps, default)
 
 The number is allocated **inside the caller's transaction**. The row lock is
 held until that transaction commits, so:
@@ -308,7 +311,7 @@ held until that transaction commits, so:
 - no other allocation for the same sequence can proceed until you commit, and
 - if you roll back, the increment is undone and the number is reused.
 
-This is what invoices need. The cost is contention: the lock is held for the
+The cost is contention: the lock is held for the
 lifetime of the surrounding transaction, so keep those transactions short.
 
 When using the facade directly, wrap your write and the allocation together:
@@ -326,9 +329,9 @@ The `HasDocumentNumber` trait does this wrapping for you.
 ### `gap_free: false` (fast sequential)
 
 The number is committed as soon as it is allocated and is **not** returned on a
-later rollback, so gaps are possible. Choose this only for sequences where the
-law does not require gap-freeness (e.g. internal quote drafts) and throughput
-matters more than a perfectly dense sequence.
+later rollback, so gaps are possible. Choose this for sequences that may skip
+values (e.g. internal quote drafts), where throughput matters more than a
+perfectly dense sequence.
 
 ### FrankenPHP / Laravel Octane (worker mode)
 
@@ -422,16 +425,6 @@ against a shared SQLite database and asserts that the allocated numbers contain
   guarantees underneath it differs; see [Database notes](#database-notes).
 - **Worker-safe**: stateless singleton, no accumulating static state, ready for
   Octane and FrankenPHP.
-
-## Possible Future Extensions
-
-- Per-type custom formatters (callables)
-- Daily reset policy
-- Numbering audit log
-- Filament integration
-
-Future extensions may be released as separate packages to keep the core small
-and focused.
 
 ## Contributing
 

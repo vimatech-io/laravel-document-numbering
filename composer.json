@@ -1,6 +1,6 @@
 {
     "name": "vimatech/laravel-document-numbering",
-    "description": "Sequential, gap-free, concurrency-safe document numbers for Laravel: invoices, quotes and credit notes. Configurable patterns, per-scope counters, period resets, row-lock safety.",
+    "description": "Sequential, concurrency-safe document numbers for Laravel, gap-free by default: invoices, quotes and credit notes. Configurable patterns, per-scope counters, period resets, row-lock safety.",
     "keywords": [
         "laravel",
         "invoice",
@@ -10,6 +10,11 @@
         "document"
     ],
     "homepage": "https://github.com/vimatech-io/laravel-document-numbering",
+    "support": {
+        "issues": "https://github.com/vimatech-io/laravel-document-numbering/issues",
+        "source": "https://github.com/vimatech-io/laravel-document-numbering",
+        "security": "https://github.com/vimatech-io/laravel-document-numbering/blob/main/SECURITY.md"
+    },
     "license": "MIT",
     "authors": [
         {

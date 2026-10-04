@@ -64,7 +64,7 @@ return [
     |
     |  - gap_free: true  -> the number is allocated inside the caller's
     |                       transaction; a rollback returns the number to the
-    |                       pool. Legally required for invoices. Slower under
+    |                       pool, so the sequence has no gaps. Slower under
     |                       contention (the row lock is held until commit).
     |              false -> "fast sequential" mode: the number is committed
     |                       immediately and is NOT returned on rollback, so

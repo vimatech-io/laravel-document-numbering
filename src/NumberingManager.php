@@ -94,7 +94,7 @@ final class NumberingManager
         // present (so for gap-free types the row lock is held until the
         // caller's commit) and otherwise opens a fresh one. The attempt count
         // lets the framework retry the whole transaction on a deadlock or
-        // "database is locked" error — only effective when we own the outer
+        // "database is locked" error, which is only effective when we own the outer
         // transaction; nested calls run exactly once.
         try {
             $connection->transaction($allocate, $this->lockAttempts());
