@@ -14,7 +14,7 @@ use Vimatech\DocumentNumbering\NumberingManager;
  *
  * The number is allocated during the `creating` event. For gap-free types the
  * model's first save is wrapped in a transaction so the allocation and the
- * INSERT commit together — if the INSERT fails, the number is released.
+ * INSERT commit together: if the INSERT fails, the number is released.
  *
  * Configure the model with either properties or method overrides:
  *

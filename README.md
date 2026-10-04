@@ -423,16 +423,6 @@ against a shared SQLite database and asserts that the allocated numbers contain
 - **Worker-safe**: stateless singleton, no accumulating static state, ready for
   Octane and FrankenPHP.
 
-## Possible Future Extensions
-
-- Per-type custom formatters (callables)
-- Daily reset policy
-- Numbering audit log
-- Filament integration
-
-Future extensions may be released as separate packages to keep the core small
-and focused.
-
 ## Contributing
 
 Contributions are welcome.

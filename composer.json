@@ -10,6 +10,11 @@
         "document"
     ],
     "homepage": "https://github.com/vimatech-io/laravel-document-numbering",
+    "support": {
+        "issues": "https://github.com/vimatech-io/laravel-document-numbering/issues",
+        "source": "https://github.com/vimatech-io/laravel-document-numbering",
+        "security": "https://github.com/vimatech-io/laravel-document-numbering/blob/main/SECURITY.md"
+    },
     "license": "MIT",
     "authors": [
         {

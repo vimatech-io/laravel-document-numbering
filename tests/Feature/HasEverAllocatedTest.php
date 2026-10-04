@@ -36,7 +36,7 @@ it('stays true after a yearly reset, when peek() reports a fresh sequence', func
 
     CarbonImmutable::setTestNow('2027-01-01 00:00:01');
 
-    // The current period is empty, so peek() offers number 1 again — correct
+    // The current period is empty, so peek() offers number 1 again. That is correct
     // for peek, and exactly why it cannot answer "is this sequence engaged?".
     expect(Numbering::for('acme', 'invoice')->peek())->toBe('INV-2027-00001');
     expect(Numbering::for('acme', 'invoice')->hasEverAllocated())->toBeTrue();

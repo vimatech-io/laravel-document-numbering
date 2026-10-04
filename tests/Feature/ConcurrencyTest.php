@@ -32,7 +32,7 @@ beforeEach(function (): void {
     ]);
     config()->set('database.default', 'concurrency');
     // The manager reads its connection from config on demand, so the existing
-    // singleton picks this up without being rebuilt — the same property that
+    // singleton picks this up without being rebuilt. This is the same property that
     // makes it safe under worker mode.
     config()->set('numbering.connection', 'concurrency');
 

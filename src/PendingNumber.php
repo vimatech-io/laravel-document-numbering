@@ -35,7 +35,7 @@ final class PendingNumber
     }
 
     /**
-     * Whether this sequence has ever consumed a number, in any period — the
+     * Whether this sequence has ever consumed a number, in any period. It is the
      * question peek() cannot answer, since it only sees the current period.
      */
     public function hasEverAllocated(): bool
