@@ -41,7 +41,7 @@ trait HasDocumentNumber
      * Wrap the initial save in a transaction for gap-free types so that the
      * number allocation and the row INSERT are committed atomically.
      *
-     * @param  array<string, mixed>  $options
+     * @param  array{touch?: bool|null}  $options
      */
     public function save(array $options = []): bool
     {
