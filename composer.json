@@ -9,7 +9,7 @@
         "gap-free",
         "document"
     ],
-    "homepage": "https://github.com/vimatech-io/laravel-document-numbering",
+    "homepage": "https://vimatech.io/open-source/",
     "support": {
         "issues": "https://github.com/vimatech-io/laravel-document-numbering/issues",
         "source": "https://github.com/vimatech-io/laravel-document-numbering",
@@ -19,7 +19,8 @@
     "authors": [
         {
             "name": "Adel Zemzemi",
-            "email": "hello@adelzemzemi.com"
+            "email": "hello@adelzemzemi.com",
+            "homepage": "https://adelzemzemi.com/"
         }
     ],
     "require": {
